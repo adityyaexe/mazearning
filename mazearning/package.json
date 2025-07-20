@@ -1,14 +1,27 @@
 {
-  "name": "mazearning",
+  "name": "mazearning-frontend",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
-  "proxy": "http://localhost:5000",
+  "description": "Frontend application for Mazearning – a gamified reward platform built with React, MUI, and Vite.",
+  "author": "Mazearning Team",
+  "license": "MIT",
+  "keywords": [
+    "react",
+    "vite",
+    "mui",
+    "frontend",
+    "rewards",
+    "gamified",
+    "mazearning"
+  ],
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
+    "dev": "vite",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview",
+    "start": "vite"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -17,6 +30,8 @@
     "@mui/material": "^7.2.0",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.10.0",
+    "framer-motion": "^12.23.5",
+    "lottie-react": "^2.4.1",
     "ra-data-simple-rest": "^5.9.1",
     "react": "^19.1.0",
     "react-admin": "^5.9.1",

@@ -1,9 +1,26 @@
-// mazearining/src/pages/Home.jsx
+// src/pages/Home.jsx
+
 import React, { useEffect, useState } from "react";
-import { Box, Grid, Card, CardContent, Typography, Button, Skeleton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../api/apiClient";
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Skeleton,
+  Alert,
+  useTheme,
+  Grow,
+  Fade,
+  Chip,
+  Avatar,
+} from "@mui/material";
+import Header from "../components/Header";
+import ScrollToTop from "../components/ScrollToTop";
 import { useNotification } from "../contexts/NotificationContext";
+import apiClient from "../api/apiClient";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import BoltIcon from "@mui/icons-material/Bolt";
 import AppsIcon from "@mui/icons-material/Apps";
@@ -14,162 +31,224 @@ export default function Home() {
   const [wallet, setWallet] = useState(null);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const { showNotification } = useNotification();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const mode = theme.palette.mode;
+
+  const taskSuggestions = [
+    { id: 1, label: "Watch 2 Ads for Bonus", action: "/ads" },
+    { id: 2, label: "Try a New App Offer", action: "/apps" },
+    { id: 3, label: "Complete a Quick Task", action: "/quick-earn" },
+  ];
+
+  const offerCategories = [
+    { title: "Surveys", icon: BoltIcon, action: "/surveys" },
+    { title: "Apps", icon: AppsIcon, action: "/apps" },
+    { title: "Ads", icon: AdUnitsIcon, action: "/ads" },
+  ];
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
+    (async () => {
       try {
+        setLoading(true);
+
         const [profileRes, walletRes, recentRes] = await Promise.all([
-          apiClient.get("/api/auth/profile"),
-          apiClient.get("/api/auth/wallet"),
-          apiClient.get("/api/auth/activity/recent"),
+          apiClient.get("/profile"),
+          apiClient.get("/wallet"),
+          apiClient.get("/users/me/activity/recent"),
         ]);
-        setProfile(profileRes.data);
-        setWallet(walletRes.data);
-        setRecent(recentRes.data);
-      } catch {
+
+        setProfile(profileRes.data || {});
+        setWallet(walletRes.data || {});
+        setRecent(recentRes.data || []);
+        setError(false);
+      } catch (err) {
+        console.error("Error fetching home data:", err);
         showNotification("Failed to load dashboard data.", "error");
+        setError(true);
       } finally {
         setLoading(false);
       }
-    }
-    fetchData();
+    })();
   }, [showNotification]);
 
   return (
-    <Box sx={{ p: { xs: 1, md: 3 } }}>
-      <Typography variant="h4" fontWeight={700} mb={2}>
-        Welcome{profile ? `, ${profile.name}` : ""}!
-      </Typography>
+    <>
+      <ScrollToTop />
 
-      <Grid container columns={12} spacing={2} mb={2}>
-        <Grid sx={{ gridColumn: { xs: "span 12", md: "span 4" } }}>
-          <Card sx={{ bgcolor: "#1976d2", color: "#fff" }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <MonetizationOnIcon fontSize="large" />
-                <Box>
-                  <Typography variant="subtitle2">Wallet Balance</Typography>
-                  <Typography variant="h5" fontWeight={700}>
-                    {loading ? <Skeleton width={80} /> : `${wallet?.balance ?? 0} mz pts`}
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                variant="contained"
-                color="secondary"
-                size="small"
-                sx={{ mt: 2 }}
-                onClick={() => navigate("/wallet")}
-              >
-                View Wallet
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: mode === "dark" ? "#121212" : "#f9f9f9",
+          color: mode === "dark" ? "#f5f5f5" : "#000",
+          transition: "all 0.3s ease-in-out",
+          px: { xs: 2, sm: 3, md: 5 },
+          py: 4,
+          boxSizing: "border-box",
+        }}
+      >
+        {/* Header */}
+        <Header title={`Welcome${profile?.name ? `, ${profile.name}` : ""}!`} />
 
-        <Grid sx={{ gridColumn: { xs: "span 12", md: "span 8" } }}>
-          <Grid container columns={12} spacing={2}>
-            <Grid sx={{ gridColumn: { xs: "span 6", md: "span 4" } }}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <BoltIcon color="primary" />
-                    <Typography fontWeight={600}>Quick Earn</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" mt={1}>
-                    Complete a quick task for instant rewards.
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    sx={{ mt: 1 }}
-                    onClick={() => navigate("/quick-earn")}
-                  >
-                    Try Now
-                  </Button>
-                </CardContent>
-              </Card>
+        <Box sx={{ width: "100%", maxWidth: "1200px", mx: "auto" }}>
+          {/* 🎯 Wallet & Suggested Tasks */}
+          <Grid container spacing={3} mb={5}>
+            <Grid item xs={12} md={4}>
+              <Grow in timeout={400}>
+                <Card
+                  sx={{
+                    bgcolor: "primary.main",
+                    color: "#fff",
+                    borderRadius: 3,
+                    "&:hover": { transform: "translateY(-4px)" },
+                    transition: "0.3s",
+                  }}
+                >
+                  <CardContent>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <MonetizationOnIcon fontSize="large" />
+                      <Box>
+                        <Typography fontSize={14}>Wallet Balance</Typography>
+                        <Typography variant="h5" fontWeight={700}>
+                          {loading ? <Skeleton width={80} /> : `${wallet?.balance ?? 0} MZ`}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{
+                        mt: 2,
+                        bgcolor: "rgba(255,255,255,0.2)",
+                        color: "#fff",
+                        fontWeight: 600,
+                      }}
+                      onClick={() => navigate("/wallet")}
+                    >
+                      View Wallet
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grow>
             </Grid>
-            <Grid sx={{ gridColumn: { xs: "span 6", md: "span 4" } }}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <AppsIcon color="primary" />
-                    <Typography fontWeight={600}>Install Apps</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" mt={1}>
-                    Earn by trying new apps.
+
+            <Grid item xs={12} md={8}>
+              <Fade in timeout={600}>
+                <Card sx={{ borderRadius: 3, p: 3 }}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    🔥 Suggested For You
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    sx={{ mt: 1 }}
-                    onClick={() => navigate("/apps")}
-                  >
-                    See Apps
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid sx={{ gridColumn: { xs: "span 12", md: "span 4" } }}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <AdUnitsIcon color="primary" />
-                    <Typography fontWeight={600}>Watch Ads</Typography>
+                  <Box display="flex" flexWrap="wrap" gap={1}>
+                    {taskSuggestions.map((task) => (
+                      <Chip
+                        key={task.id}
+                        label={task.label}
+                        clickable
+                        variant="outlined"
+                        onClick={() => navigate(task.action)}
+                      />
+                    ))}
                   </Box>
-                  <Typography variant="body2" color="text.secondary" mt={1}>
-                    Watch videos or ads for rewards.
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    sx={{ mt: 1 }}
-                    onClick={() => navigate("/ads")}
-                  >
-                    Watch Now
-                  </Button>
-                </CardContent>
-              </Card>
+                </Card>
+              </Fade>
             </Grid>
           </Grid>
-        </Grid>
-      </Grid>
 
-      {/* Recent Activity */}
-      <Box mt={3}>
-        <Typography variant="h6" fontWeight={600} mb={1}>
-          Recent Activity
-        </Typography>
-        <Card>
-          <CardContent>
-            {loading ? (
-              <Skeleton height={40} />
-            ) : recent.length === 0 ? (
-              <Typography color="text.secondary">No recent activity yet.</Typography>
-            ) : (
-              <Box component="ul" sx={{ pl: 2, mb: 0 }}>
-                {recent.map((item, idx) => (
-                  <li key={idx}>
-                    <Typography variant="body2">
-                      {item.description}{" "}
-                      <span style={{ color: "#1976d2" }}>
-                        {item.points > 0 ? `+${item.points}` : item.points} mz pts
-                      </span>{" "}
-                      <span style={{ color: "#888", fontSize: 12 }}>
-                        ({new Date(item.date).toLocaleString()})
-                      </span>
-                    </Typography>
-                  </li>
-                ))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+          {/* 🧩 Offer Categories */}
+          <Box mb={5}>
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              🧩 Offer Categories
+            </Typography>
+            <Grid container spacing={3}>
+              {offerCategories.map((cat, i) => (
+                <Grid key={i} item xs={12} sm={4}>
+                  <Card
+                    onClick={() => navigate(cat.action)}
+                    sx={{
+                      borderRadius: 3,
+                      p: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      bgcolor: mode === "dark" ? "#1e1e1e" : "#fff",
+                      "&:hover": {
+                        transform: "scale(1.02)",
+                        boxShadow: 4,
+                      },
+                    }}
+                  >
+                    <Avatar>
+                      <cat.icon />
+                    </Avatar>
+                    <Typography fontWeight={600}>{cat.title}</Typography>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+
+          {/* 🔁 Recent Activity */}
+          <Box mb={5}>
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              🧵 Recent Activity
+            </Typography>
+
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent>
+                {loading ? (
+                  <>
+                    <Skeleton height={30} />
+                    <Skeleton height={30} sx={{ mt: 1 }} />
+                  </>
+                ) : error ? (
+                  <Alert severity="error">Failed to load activity.</Alert>
+                ) : recent.length === 0 ? (
+                  <Typography color="text.secondary">
+                    No recent activity logged.
+                  </Typography>
+                ) : (
+                  <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
+                    {recent.map((item, i) => (
+                      <Box
+                        key={i}
+                        display="flex"
+                        alignItems="center"
+                        gap={1.5}
+                        px={1}
+                        py={1}
+                        borderBottom="1px dashed #ccc"
+                      >
+                        <Avatar
+                          sx={{
+                            bgcolor: item.points > 0 ? "success.main" : "error.main",
+                            width: 32,
+                            height: 32,
+                            fontSize: 14,
+                          }}
+                        >
+                          {item.points > 0 ? "+" : "-"}
+                        </Avatar>
+                        <Box>
+                          <Typography fontSize={14}>{item.description}</Typography>
+                          <Typography fontSize={12} color="text.secondary">
+                            {new Date(item.date).toLocaleString()} ·{" "}
+                            <b>{item.points > 0 ? `+${item.points}` : item.points} pt</b>
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }

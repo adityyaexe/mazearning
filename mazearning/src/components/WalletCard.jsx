@@ -1,52 +1,92 @@
-// mazearing/src/components/Wallet/WalletCard.jsx
+// mazearning/src/components/Wallet/WalletCard.jsx
+
 import React from "react";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
+import PropTypes from "prop-types";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Box,
+  useTheme,
+} from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import Box from "@mui/material/Box";
 
 export default function WalletCard({
-  balance,
+  balance = 0,
   onConvert,
   onWithdraw,
   minWithdraw = 690,
 }) {
+  const theme = useTheme();
+  const isEligible = balance >= minWithdraw;
+
   return (
-    <Card sx={{ maxWidth: 340, margin: 2, boxShadow: 3, borderRadius: 3 }}>
+    <Card
+      sx={{
+        maxWidth: 340,
+        width: "100%",
+        m: 2,
+        boxShadow: 3,
+        borderRadius: 3,
+      }}
+    >
       <CardContent>
+        {/* Wallet header */}
         <Box display="flex" alignItems="center" mb={2}>
-          <AccountBalanceWalletIcon sx={{ fontSize: 32, color: "#388e3c" }} />
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <AccountBalanceWalletIcon
+            sx={{ fontSize: 32, color: theme.palette.success.main }}
+          />
+          <Typography variant="h6" sx={{ ml: 1, fontWeight: 600 }}>
             Wallet Balance
           </Typography>
         </Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: "#388e3c" }}>
-          {balance} mz pts
+
+        {/* Wallet balance */}
+        <Typography
+          variant="h4"
+          fontWeight={800}
+          color="success.main"
+          sx={{ mb: 0.5 }}
+        >
+          {balance.toLocaleString()} mz pts
         </Typography>
+
+        {/* Minimum withdraw info */}
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Minimum withdrawal: {minWithdraw} mz pts
+          Minimum withdrawal: {minWithdraw.toLocaleString()} mz pts
         </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          sx={{ mr: 1, borderRadius: 2 }}
-          onClick={onConvert}
-        >
-          Convert to ₹
-        </Button>
-        <Button
-          variant="contained"
-          size="small"
-          color="success"
-          sx={{ borderRadius: 2 }}
-          onClick={onWithdraw}
-          disabled={balance < minWithdraw}
-        >
-          Withdraw
-        </Button>
+
+        {/* Action buttons */}
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ borderRadius: 2, textTransform: "none" }}
+            onClick={onConvert}
+          >
+            Convert to ₹
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            disabled={!isEligible}
+            sx={{ borderRadius: 2, textTransform: "none" }}
+            onClick={onWithdraw}
+          >
+            Withdraw
+          </Button>
+        </Box>
       </CardContent>
     </Card>
   );
 }
+
+// ✅ PropTypes declaration
+WalletCard.propTypes = {
+  balance: PropTypes.number.isRequired,
+  onConvert: PropTypes.func.isRequired,
+  onWithdraw: PropTypes.func.isRequired,
+  minWithdraw: PropTypes.number,
+};

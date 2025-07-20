@@ -1,24 +1,30 @@
-// mazearning/src/components/AppCard/AppCard.jsx
-import React from "react";
-import Card from "@mui/material/Card";
-import CardHeader from "@mui/material/CardHeader";
-import CardMedia from "@mui/material/CardMedia";
-import CardContent from "@mui/material/CardContent";
-import CardActions from "@mui/material/CardActions";
-import Collapse from "@mui/material/Collapse";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
+// mazearning/src/components/AppCard.jsx
+
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import {
+  Card,
+  CardHeader,
+  CardMedia,
+  CardContent,
+  CardActions,
+  Collapse,
+  Button,
+  IconButton,
+  Typography,
+} from "@mui/material";
+
+import { styled } from "@mui/material/styles";
+
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import StarIcon from "@mui/icons-material/Star";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { styled } from "@mui/material/styles";
 
-const ExpandMore = styled((props) => {
-  const { expand, ...other } = props;
-  return <IconButton {...other} />;
+// 🔧 Styled button to avoid prop leak to DOM
+const ExpandMoreButton = styled(IconButton, {
+  shouldForwardProp: (prop) => prop !== "expand",
 })(({ theme, expand }) => ({
-  transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
+  transform: expand ? "rotate(180deg)" : "rotate(0deg)",
   marginLeft: "auto",
   transition: theme.transitions.create("transform", {
     duration: theme.transitions.duration.shortest,
@@ -34,76 +40,144 @@ export default function AppCard({
   rating,
   completed,
   onAction,
-  actionLabel = "Install",
+  actionLabel,
   onFavorite,
-  isFavorite = false,
-  details = "",
+  isFavorite,
+  details,
 }) {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  const handleExpandClick = () => setExpanded(!expanded);
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
 
   return (
-    <Card sx={{ maxWidth: 345, margin: 2, boxShadow: 3 }}>
+    <Card
+      sx={{
+        maxWidth: 345,
+        width: "100%",
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: 3,
+      }}
+    >
       <CardHeader
         avatar={
           icon ? (
-            <img
-              src={icon}
-              alt={name}
-              style={{ width: 40, height: 40, borderRadius: 8 }}
+            <CardMedia
+              component="img"
+              image={icon}
+              alt={`${name} icon`}
+              sx={{ width: 40, height: 40, borderRadius: "50%" }}
             />
+          ) : (
+            <StarIcon color="disabled" />
+          )
+        }
+        title={
+          <Typography variant="subtitle1" fontWeight={600}>
+            {name}
+          </Typography>
+        }
+        subheader={
+          size ? (
+            <Typography variant="caption" color="text.secondary">
+              Size: {size}
+            </Typography>
           ) : null
         }
-        title={name}
-        subheader={`Size: ${size}`}
       />
-      {icon && (
-        <CardMedia
-          component="img"
-          height="140"
-          image={icon}
-          alt={name}
-          sx={{ objectFit: "contain", background: "#f9f9f9" }}
-        />
-      )}
+
       <CardContent>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {description}
-        </Typography>
-        <Typography variant="body2">
-          <b>{points} mz pts</b> reward
-        </Typography>
-        <Typography variant="body2" sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
-          <StarIcon fontSize="small" sx={{ color: "#FFD700", mr: 0.5 }} />
-          {rating} | {completed} users completed
-        </Typography>
+        {description && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {description}
+          </Typography>
+        )}
+
+        {Number.isFinite(points) && (
+          <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 700, mb: 1 }}>
+            +{points} mz pts reward
+          </Typography>
+        )}
+
+        {(rating || completed) && (
+          <Typography variant="caption" color="text.secondary">
+            {rating ?? "—"} ★ &nbsp;|&nbsp; {completed ?? 0} users completed
+          </Typography>
+        )}
       </CardContent>
+
       <CardActions disableSpacing>
-        <Button size="small" variant="contained" onClick={onAction}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onAction}
+          size="small"
+        >
           {actionLabel}
         </Button>
-        <IconButton onClick={onFavorite} aria-label="add to favorites" color={isFavorite ? "error" : "default"}>
+
+        <IconButton
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          onClick={onFavorite}
+          color={isFavorite ? "secondary" : "default"}
+        >
           <FavoriteIcon />
         </IconButton>
+
         {details && (
-          <ExpandMore
+          <ExpandMoreButton
             expand={expanded}
             onClick={handleExpandClick}
+            aria-label="Show more"
             aria-expanded={expanded}
-            aria-label="show more"
           >
             <ExpandMoreIcon />
-          </ExpandMore>
+          </ExpandMoreButton>
         )}
       </CardActions>
+
       {details && (
         <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <CardContent>
-            <Typography paragraph>{details}</Typography>
+          <CardContent sx={{ backgroundColor: "#fafafa" }}>
+            <Typography variant="body2" paragraph>
+              {details}
+            </Typography>
           </CardContent>
         </Collapse>
       )}
     </Card>
   );
 }
+
+// ✅ Prop validation
+AppCard.propTypes = {
+  icon: PropTypes.string,
+  name: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  size: PropTypes.string,
+  points: PropTypes.number,
+  rating: PropTypes.number,
+  completed: PropTypes.number,
+  onAction: PropTypes.func,
+  actionLabel: PropTypes.string,
+  onFavorite: PropTypes.func,
+  isFavorite: PropTypes.bool,
+  details: PropTypes.string,
+};
+
+// ✅ Default props
+AppCard.defaultProps = {
+  icon: "",
+  description: "",
+  size: null,
+  points: 0,
+  rating: null,
+  completed: 0,
+  onAction: () => {},
+  actionLabel: "Install",
+  onFavorite: () => {},
+  isFavorite: false,
+  details: "",
+};

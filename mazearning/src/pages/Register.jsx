@@ -1,6 +1,6 @@
-// mazearning/src/pages/Register.jsx
+// src/pages/Register.jsx
+
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
@@ -11,45 +11,58 @@ import {
   Paper,
   Link,
   CircularProgress,
-  useTheme,
-  useMediaQuery,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 export default function Register() {
-  const { login } = useAuth(); // auto-login after registration
   const { showNotification } = useNotification();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      return showNotification("Please fill in all fields correctly", "error");
+    }
+
+    if (password.length < 8) {
+      return showNotification("Password must be at least 8 characters", "error");
+    }
+
     setLoading(true);
+
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
+        credentials: "include", // for token cookie if using
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
+        throw new Error(data.error || "Registration failed");
       }
 
-      showNotification("Registration successful!", "success");
-
-      // Optionally auto-login after registration
-      await login(email, password);
-      navigate("/");
+      showNotification("Registration successful! Please log in.", "success");
+      navigate("/login");
     } catch (err) {
-      showNotification(err.message || "Registration failed. Please try again.", "error");
+      showNotification(err.message || "Registration failed.", "error");
     } finally {
       setLoading(false);
     }
@@ -59,94 +72,113 @@ export default function Register() {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "#f5f7fa",
+        background: "linear-gradient(135deg, #f5f7fa, #e1ecf4)",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
+        alignItems: "center",
         px: 2,
       }}
     >
       <Paper
         elevation={6}
         sx={{
-          p: { xs: 2, sm: 4 },
+          p: 4,
           width: "100%",
-          maxWidth: { xs: 360, sm: 400, md: 420, lg: 480 },
+          maxWidth: 440,
           borderRadius: 3,
           textAlign: "center",
-          boxSizing: "border-box",
         }}
       >
-        <AccountBalanceWalletIcon
-          sx={{ color: "#1976d2", fontSize: 48, mb: 1 }}
-        />
-        <Typography variant={isXs ? "h6" : "h5"} fontWeight={700} sx={{ mb: 1, color: "#1976d2" }}>
-          Create Your Mazearning Account
+        <AccountBalanceWalletIcon sx={{ color: "#1976d2", fontSize: 48, mb: 1 }} />
+        <Typography variant="h5" fontWeight={700} color="primary" mb={1}>
+          Create Account
         </Typography>
-        <Typography variant="body2" sx={{ mb: 3, color: "text.secondary" }}>
-          Join Mazearning to earn rewards, complete offers, and manage your wallet!
+        <Typography color="text.secondary" sx={{ mb: 3 }}>
+          Join Mazearning to earn, save, and explore the best reward system.
         </Typography>
+
         <form onSubmit={handleSubmit} autoComplete="off">
+          {/* Name Field */}
           <TextField
+            fullWidth
+            margin="normal"
             label="Name"
             type="text"
             variant="outlined"
-            fullWidth
-            margin="dense"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            autoFocus
-            size={isXs ? "small" : "medium"}
+            inputProps={{ maxLength: 50 }}
           />
+
+          {/* Email Field */}
           <TextField
+            fullWidth
+            margin="normal"
             label="Email"
             type="email"
             variant="outlined"
-            fullWidth
-            margin="dense"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            size={isXs ? "small" : "medium"}
+            inputProps={{ maxLength: 100 }}
           />
+
+          {/* Password Field */}
           <TextField
-            label="Password"
-            type="password"
-            variant="outlined"
             fullWidth
-            margin="dense"
+            margin="normal"
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            size={isXs ? "small" : "medium"}
+            inputProps={{ minLength: 8, maxLength: 64 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                    aria-label="toggle password visibility"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
+
+          {/* Submit Button */}
           <Button
             type="submit"
             variant="contained"
-            color="primary"
             fullWidth
+            size="large"
+            disabled={loading}
             sx={{
               mt: 2,
+              py: 1.2,
               fontWeight: 700,
+              fontSize: "1rem",
+              textTransform: "none",
               bgcolor: "#1976d2",
               ":hover": { bgcolor: "#1565c0" },
-              py: 1.2,
-              fontSize: isXs ? "1rem" : "1.1rem",
             }}
-            disabled={loading}
-            size="large"
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : "Register"}
           </Button>
         </form>
-        <Box sx={{ mt: 2 }}>
+
+        {/* Footer Link */}
+        <Box mt={3}>
           <Typography variant="body2">
             Already have an account?{" "}
             <Link
               component={RouterLink}
               to="/login"
-              sx={{ color: "#1976d2", fontWeight: 600 }}
+              sx={{ fontWeight: 600, color: "#1976d2" }}
             >
               Login
             </Link>

@@ -1,8 +1,19 @@
 // mazearning/src/pages/ForgotPassword.jsx
+
 import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  useTheme,
+} from "@mui/material";
 import { useNotification } from "../contexts/NotificationContext";
+import ScrollToTop from "../components/ScrollToTop"; // Optional if routing triggers
 
 export default function ForgotPassword() {
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const { showNotification } = useNotification();
@@ -10,35 +21,72 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      // Replace with your real API endpoint
-      const response = await fetch("/api/auth/forgot-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!response.ok) throw new Error("Failed to send reset email");
-      showNotification("Password reset link sent! Check your email.", "success");
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to send email.");
+
+      showNotification("📨 Password reset link sent. Check your inbox.", "success");
+      setEmail(""); // Optionally reset field
     } catch (err) {
-      showNotification("Failed to send reset email. Try again.", "error");
+      showNotification(err.message || "Something went wrong.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Forgot Password</h2>
-      <input
-        type="email"
-        placeholder="Enter your email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        required
-      /><br />
-      <button type="submit" disabled={loading}>
-        {loading ? "Sending..." : "Send Reset Link"}
-      </button>
-    </form>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        px: 2,
+      }}
+    >
+      <ScrollToTop />
+
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 3, width: "100%", maxWidth: 400 }}>
+        <Typography variant="h5" fontWeight={600} gutterBottom textAlign="center">
+          Forgot Password
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" mb={3} textAlign="center">
+          Enter your registered email and we'll send you a reset link.
+        </Typography>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <TextField
+            label="Email address"
+            type="email"
+            fullWidth
+            required
+            sx={{ mb: 2 }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <Button
+            type="submit"
+            color="primary"
+            variant="contained"
+            fullWidth
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send Reset Link"}
+          </Button>
+        </form>
+      </Paper>
+    </Box>
   );
 }

@@ -1,15 +1,22 @@
+/* mazearning/src/App.css */
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  background-color: var(--background-color, #fff);
+  color: var(--text-color, #333);
+  box-sizing: border-box;
 }
 
+/* Logo Styling */
 .logo {
   height: 6em;
   padding: 1.5em;
+  transition: filter 300ms ease;
   will-change: filter;
-  transition: filter 300ms;
 }
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
@@ -18,25 +25,34 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
+/* Optional Logo Animation (if retained) */
 @media (prefers-reduced-motion: no-preference) {
+  @keyframes logo-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
 }
 
+/* General card container */
 .card {
   padding: 2em;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  text-align: left;
 }
 
+/* Readable muted text */
 .read-the-docs {
   color: #888;
+  font-size: 0.85rem;
+  margin-top: 1rem;
 }

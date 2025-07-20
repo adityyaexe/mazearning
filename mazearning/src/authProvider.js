@@ -1,60 +1,91 @@
 // src/authProvider.js
+
+/**
+ * Custom React-Admin authProvider for Mazearning Admin
+ */
+
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const AUTH_KEY = "admin_auth";
+
 const authProvider = {
-  // Called when the user attempts to log in
+  /**
+   * Called when the user attempts to log in
+   * @param {Object} params - { username, password }
+   */
   async login({ username, password }) {
-    const request = new Request('http://localhost:5000/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email: username, password }),
-      headers: new Headers({ 'Content-Type': 'application/json' }),
-    });
-    let response;
     try {
-      response = await fetch(request);
+      const response = await fetch(`${API_URL}/api/auth/admin/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.token) {
+        throw new Error(data.error || "Invalid credentials");
+      }
+
+      // ✅ Store user details + token
+      localStorage.setItem(AUTH_KEY, JSON.stringify(data));
+      return Promise.resolve();
     } catch (error) {
-      throw new Error('Network error');
+      console.error("[Admin Login Error]:", error);
+      throw new Error(error.message || "Login failed");
     }
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error('Invalid credentials');
-    }
-    const { token, ...user } = await response.json();
-    localStorage.setItem('admin_auth', JSON.stringify({ token, ...user }));
-    return Promise.resolve();
   },
 
-  // Called when the user clicks on the logout button
+  /**
+   * Called when the user clicks logout
+   */
   logout() {
-    localStorage.removeItem('admin_auth');
+    localStorage.removeItem(AUTH_KEY);
     return Promise.resolve();
   },
 
-  // Called when the API returns an error
+  /**
+   * Called when the API returns an error
+   * @param {{status: number}} error
+   */
   checkError({ status }) {
     if (status === 401 || status === 403) {
-      localStorage.removeItem('admin_auth');
+      localStorage.removeItem(AUTH_KEY);
       return Promise.reject();
     }
     return Promise.resolve();
   },
 
-  // Called when the user navigates, to check authentication
+  /**
+   * Called on each route navigation
+   */
   checkAuth() {
-    return localStorage.getItem('admin_auth') ? Promise.resolve() : Promise.reject();
+    const isLoggedIn = !!localStorage.getItem(AUTH_KEY);
+    return isLoggedIn ? Promise.resolve() : Promise.reject({ redirectTo: "/login" });
   },
 
-  // (Optional) Get admin identity for the UI
+  /**
+   * Returns current user identity for audit/sidebar/meta
+   */
   getIdentity() {
     try {
-      const { token, ...user } = JSON.parse(localStorage.getItem('admin_auth'));
-      return Promise.resolve(user);
-    } catch {
-      return Promise.reject();
+      const stored = JSON.parse(localStorage.getItem(AUTH_KEY));
+      if (!stored?.email) throw new Error("No identity");
+
+      const { name = "Admin", email, role = "admin", avatar } = stored;
+      return Promise.resolve({ id: email, fullName: name, email, role, avatar });
+    } catch (err) {
+      console.error("[Admin Get Identity Error]:", err); // ✅ log the unused error
+      return Promise.reject("Identity error");
     }
   },
 
-  // (Optional) Authorization logic for resources/actions
+  /**
+   * Role-based access check (optional)
+   */
   canAccess() {
-    // Implement role-based checks if needed
-    return Promise.resolve();
+    return Promise.resolve(true); // ✅ removed unused 'params'
   },
 };
 

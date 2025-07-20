@@ -1,10 +1,35 @@
 // mazearning/src/components/ProtectedRoute.jsx
+
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { CircularProgress, Box } from "@mui/material";
 
+/**
+ * ProtectedRoute wraps protected components & handles loading/auth checks.
+ *
+ * Redirects to /login if user is not authenticated.
+ */
 export default function ProtectedRoute({ children }) {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="60vh"
+        aria-label="Authenticating user"
+      >
+        <CircularProgress size={30} />
+      </Box>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return children;
 }
